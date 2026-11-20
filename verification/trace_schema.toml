@@ -1,0 +1,15 @@
+[dag]
+name = "RIJNDAEL-uROM Verification DAG"
+
+[contracts.gf256]
+reference = "futhark/gf256.fut:gf_pairs"
+targets   = ["vhdl/gf256_alu.vhd:gf_mul", "agc/aes_custom_agc.agc:GFMUL", "gf_mul_agc_equiv.c:gf_mul_ref"]
+vectors   = "verification/gf256_vectors.bin"
+pairs     = 65536
+
+[contracts.cipher512]
+reference = "futhark/state512.fut + futhark/diffusion.fut"
+targets   = ["vhdl/microsequencer.vhd + microcode/encryption.mem"]
+vectors   = "verification/round_vectors.bin"
+state_bytes = 64
+rounds      = 10

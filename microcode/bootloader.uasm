@@ -1,0 +1,23 @@
+; ============================================================================
+; bootloader.uasm — RIJNDAEL-uROM Bootloader Firmware (0x000 .. 0x03F)
+; ============================================================================
+; 1. Initializes status and loop counters.
+; 2. Checks boot integrity / WCS patch flag via BOOT_BUS.
+; 3. Waits for external `start` signal, then branches to `fw_entry` (0x040).
+; ============================================================================
+
+.org 0x000
+boot_reset:
+    NOP     0x00, 0x00, 0x0, 0x000          ; Settle reset pipeline
+    LOAD    BOOT_REG, BOOT_BUS, 0x0, 0xA51  ; Latch boot magic / WCS mode
+    LOAD    CRC_REG,  BOOT_BUS, 0x0, 0x000  ; Clear firmware integrity accumulator
+    LOAD    LC1,      BOOT_BUS, 0x0, 0x008  ; 8-step BIST GF(2^8) self-check count
+
+boot_bist:
+    GF_MUL  BOOT_REG, RCON,     0x2, 0x057  ; BIST: gf_mul(0x57, imm=0x57) exercise
+    XOR     CRC_REG,  BOOT_REG, 0x0, 0x000  ; Fold into BIST signature
+    LOOP    LC1,      0x00,     0x1, boot_bist
+
+boot_wait_start:
+    BRANCH  STATUS,   0x00,     0x4, 0x040  ; If start == 1, jump to firmware 0x040
+    BRANCH  STATUS,   0x00,     0x0, boot_wait_start ; Else poll start

@@ -1,0 +1,49 @@
+[isa]
+name = "RIJNDAEL-uROM-32"
+word_bits = 32
+addr_bits = 12
+rom_depth = 4096
+state_bytes = 64
+
+[fields]
+opcode = "31:28"
+dest   = "27:22"
+src    = "21:16"
+ctrl   = "15:12"
+imm12  = "11:0"
+
+[opcodes]
+NOP       = 0x0
+LOAD      = 0x1
+STORE     = 0x2
+XOR       = 0x3
+GF_MUL    = 0x4
+SUBBYTE   = 0x5
+SHIFTROW  = 0x6
+MIXCOLUMN = 0x7
+KEYSTEP   = 0x8
+BRANCH    = 0x9
+LOOP      = 0xA
+HALT      = 0xF
+
+[registers]
+STATE    = 0x00
+RKEY     = 0x01
+BOOT_REG = 0x02
+CRC_REG  = 0x03
+LC0      = 0x04
+LC1      = 0x05
+STATUS   = 0x06
+EXT_PT   = 0x10
+EXT_KEY  = 0x11
+EXT_CT   = 0x12
+BOOT_BUS = 0x13
+RCON     = 0x14
+
+[ctrl_flags]
+BANK_WIDE  = 0x8  # ctrl[3]: 1 = 64-byte parallel/bank op, 0 = scalar/imm
+COND_ALWAYS = 0x0
+COND_Z      = 0x1
+COND_NZ     = 0x2
+COND_BOOTOK = 0x3
+COND_START  = 0x4

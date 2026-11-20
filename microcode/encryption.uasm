@@ -1,0 +1,29 @@
+; ============================================================================
+; encryption.uasm — 512-bit Custom AES-Derived Cipher Firmware (0x040 .. 0x0FF)
+; ============================================================================
+; 64-byte state (STATE) + 64-byte round key (RKEY), 10 rounds.
+; ============================================================================
+
+.org 0x040
+fw_entry:
+    LOAD      STATE,  EXT_PT,  0x8, 0x000   ; Load 512-bit plaintext (64 bytes)
+    LOAD      RKEY,   EXT_KEY, 0x8, 0x000   ; Load 512-bit master key (64 bytes)
+    XOR       STATE,  RKEY,    0x8, 0x000   ; Round 0: AddRoundKey
+    LOAD      LC0,    RCON,    0x0, 0x009   ; LC0 = 9 (Rounds 1..9)
+
+round_loop:
+    SUBBYTE   STATE,  STATE,   0x8, 0x000   ; 64-byte S-box substitution
+    SHIFTROW  STATE,  STATE,   0x8, 0x000   ; 8x8 byte row/lane permutation
+    MIXCOLUMN STATE,  STATE,   0x8, 0x000   ; 8-column MDS diffusion via GF256_ALU
+    KEYSTEP   RKEY,   RCON,    0x8, 0x0A5   ; Key schedule step + 0xA5 tweak
+    XOR       STATE,  RKEY,    0x8, 0x000   ; AddRoundKey
+    LOOP      LC0,    0x00,    0x0, round_loop
+
+final_round:
+    SUBBYTE   STATE,  STATE,   0x8, 0x000   ; Round 10 SubBytes
+    SHIFTROW  STATE,  STATE,   0x8, 0x000   ; Round 10 ShiftRows (no MixColumns)
+    KEYSTEP   RKEY,   RCON,    0x8, 0x0A5   ; Round 10 KeyStep
+    XOR       STATE,  RKEY,    0x8, 0x000   ; Round 10 AddRoundKey
+    STORE     EXT_CT, STATE,   0x8, 0x000   ; Output 512-bit ciphertext
+    HALT      0x00,   0x00,    0x0, 0x000   ; Assert done, return to idle/boot
+    BRANCH    STATUS, 0x00,    0x0, 0x008   ; On restart, poll start at boot_wait_start

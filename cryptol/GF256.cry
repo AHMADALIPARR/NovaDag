@@ -1,0 +1,23 @@
+module GF256 where
+type Byte = [8]
+xtime : Byte -> Byte
+xtime a =
+  (a << 1) ^
+  (if a @ 0 then 0x1b else 0x00)
+gfMul : Byte -> Byte -> Byte
+gfMul a b =
+  loop (x, y, r) = (a, b, 0x00)
+  for i < 8 do
+    (
+      xtime x,
+      y >> 1,
+      r ^ (if y @ 7 then x else 0x00)
+    )
+  in r
+zeroIdentity : Byte -> Bit
+zeroIdentity x = gfMul x 0 == 0
+oneIdentity : Byte -> Bit
+oneIdentity x = gfMul x 1 == x
+commutative : Byte -> Byte -> Bit
+commutative x y =
+  gfMul x y == gfMul y x
