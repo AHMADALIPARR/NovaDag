@@ -121,15 +121,15 @@ stateDiagram-v2
 
 ```mermaid
 graph TD
-  Core[Shared GF(2^8) + round structure]
-  Core --> P128[128-bit AGC prototype]
-  Core --> P512[512-bit production]
-  P128 --> AGCAsm[AGC assembly + octal constants]
-  P128 --> C128[C11 128-bit reference]
-  P512 --> Lanes[4 × 16-byte lanes]
-  P512 --> KeyStep[Chained KeyStep]
-  P512 --> C512[C11 512-bit reference]
-  P512 --> HW[VHDL / uROM / outer ROM]
+  Core["Shared GF(2^8) + round structure"]
+  Core --> P128["128-bit AGC prototype"]
+  Core --> P512["512-bit production"]
+  P128 --> AGCAsm["AGC assembly + octal constants"]
+  P128 --> C128["C11 128-bit reference"]
+  P512 --> Lanes["4 x 16-byte lanes"]
+  P512 --> KeyStep["Chained KeyStep"]
+  P512 --> C512["C11 512-bit reference"]
+  P512 --> HW["VHDL / uROM / outer ROM"]
 ```
 
 *Two specifications share algebra; the 128-bit branch targets AGC, the 512-bit branch targets production hardware and the nested ROM.*
@@ -139,26 +139,35 @@ graph TD
 ```mermaid
 graph LR
   subgraph SW["Software End"]
-    Cryptol
-    Racket
-    C11
-    Futhark
-    AGC
+    CryptolSW[Cryptol]
+    RacketSW[Racket]
+    C11SW[C11]
+    FutharkSW[Futhark]
+    AGCSW[AGC]
   end
   subgraph Shared["Shared Semantic Core"]
-    GF[GF(2^8) 0x11B]
-    Rounds[SubBytes / ShiftRows / MixColumns / KeyStep]
+    GF["GF(2^8) 0x11B"]
+    Rounds["SubBytes / ShiftRows / MixColumns / KeyStep"]
   end
   subgraph HW["Hardware End"]
-    VHDL
-    SV
-    uROM
-    OuterROM[Nested outer ROM]
+    VHDLHW[VHDL]
+    SVHW[SystemVerilog]
+    uROMHW[uROM]
+    OuterROM["Nested outer ROM"]
     Sequencer[Microsequencer]
   end
-  SW --> Shared
-  Shared --> HW
-  Evidence[Evidence spine] -.-> Shared
+  CryptolSW --> GF
+  RacketSW --> GF
+  C11SW --> Rounds
+  FutharkSW --> Rounds
+  AGCSW --> Rounds
+  GF --> VHDLHW
+  Rounds --> VHDLHW
+  Rounds --> SVHW
+  Rounds --> uROMHW
+  Rounds --> OuterROM
+  Rounds --> Sequencer
+  Evidence["Evidence spine"] -.-> GF
 ```
 
 *Shared mathematical core in the middle; software and hardware ends meet through verified transformations and execution evidence.*
